@@ -100,3 +100,15 @@ func TestSubmission(t *testing.T) {
 		t.Error(acc)
 	}
 }
+
+func TestEC(t *testing.T) {
+	train := data.GetSpamTrainData()
+	model := classifierFinal(train)
+	valid := data.GetSpamValidData()
+	preds := make([]Prediction, 0)
+	for _, point := range valid {
+		preds = append(preds, predictFinal(model, point))
+	}
+	acc := accuracy(valid, preds)
+	fmt.Println(acc)
+}

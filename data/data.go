@@ -99,6 +99,26 @@ func GetSpamValidData() []Point {
 	return getData("../spam/valid.list", labels)
 }
 
+func GetSpamTrainDataMany() []Point {
+	labels := []string{"ham", "spam"}
+	return getData("../spam/train_many.list", labels)
+}
+
+func GetSpamValidDataMany() []Point {
+	labels := []string{"ham", "spam"}
+	return getData("../spam/valid_many.list", labels)
+}
+
+func GetSpamTrainDataOne() []Point {
+	labels := []string{"ham", "spam"}
+	return getData("../spam/train_one.list", labels)
+}
+
+func GetSpamValidDataOne() []Point {
+	labels := []string{"ham", "spam"}
+	return getData("../spam/valid_one.list", labels)
+}
+
 func GetCollegeData() []Point {
 	return []Point{
 		Point{"College", []float64{24, 40000}},

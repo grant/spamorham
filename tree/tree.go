@@ -3,6 +3,7 @@ import (
 	"github.com/grant/spamorham/data"
 	"math"
 	"sort"
+	"math/rand"
 )
 
 
@@ -48,6 +49,7 @@ func mostLikelyClass(prediction Prediction) string {
 	for k, v := range prediction {
 		if v > biggestValue {
 			biggestKey = k
+			biggestValue = v
 		}
 	}
 	return biggestKey
@@ -217,6 +219,45 @@ func testSubmission(data Data, test Data, depth int) ([]Prediction, *Tree) {
 }
 
 func submission(data Data, test Data) []Prediction {
-	predictions, _ := testSubmission(data, test, 1)
+	predictions, _ := testSubmission(data, test, 999)
 	return predictions
+}
+
+// EC
+
+func classifierFinal(data Data) []*Tree {
+	depth := 10
+	numTrees := 49
+	trees := make([]*Tree, 0)
+	for i := 0; i < numTrees; i += 1 {
+		treeData := make(Data, 0)
+		for j := 0; j < len(data); j += 1 {
+			if rand.Intn(2) == 1 {
+				treeData = append(treeData, data[j])
+			}
+		}
+		tree := c45(treeData, depth)
+		trees = append(trees, tree)
+	}
+	return trees
+}
+
+func predictFinal(model []*Tree, point data.Point) Prediction {
+	predictionSum := make(map[string]float64)
+	for i := 0; i < len(model); i += 1 {
+		prediction := model[i].predict(point)
+		for k, v := range prediction {
+			predictionSum[k] += v
+		}
+	}
+
+	// Normalize prediction sum
+	var total float64 = 0
+	for _, v := range predictionSum {
+		total += v
+	}
+	for k, _ := range predictionSum {
+		predictionSum[k] /= total
+	}
+	return predictionSum
 }

@@ -2,12 +2,13 @@ package main
 import (
 	"github.com/grant/spamorham/data"
 	"math"
+	"sort"
 )
 
 
 type Tree struct {
 	Leaf         bool
-	Prediction   string
+	Prediction   Prediction
 	FeatureIndex int
 	Threshold    float64
 	Left         *Tree
@@ -17,11 +18,20 @@ type Tree struct {
 type Prediction map[string]float64
 type Data []data.Point
 
+type SortedData struct {
+	data      Data
+	featureId int
+}
+
+func (p SortedData) Len() int { return len(p.data) }
+func (p SortedData) Less(i, j int) bool { return p.data[i].Values[p.featureId] < p.data[j].Values[p.featureId]}
+func (p SortedData) Swap(i, j int) { p.data[i], p.data[j] = p.data[j], p.data[i] }
+
 func (d Data) Len() int {
 	return int(len(d))
 }
 
-func (t *Tree) predict(point data.Point) string {
+func (t *Tree) predict(point data.Point) Prediction {
 	if t.Leaf {
 		return t.Prediction
 	}
@@ -103,8 +113,9 @@ func findBestThresHoldFast(data Data, featureId int) (float64, float64) {
 	entropy := getEntropy(data)
 	var bestGain float64 = 0
 	var bestThreshold float64 = 0
-	//	sort.Sort(ByFeatureValue(people))
-	sortedData := data
+	sd := &SortedData{data, featureId}
+	sort.Sort(sd)
+	sortedData := sd.data
 	countTotal := len(sortedData)
 	var left Data
 	var right Data = sortedData
@@ -147,9 +158,9 @@ func findBestSplit(data Data) (int, float64) {
 	if len(data) < 2 {
 		return -1, -1
 	}
-	bestFeatureId := -1
+	var bestFeatureId int = -1
 	var bestGain float64 = 0
-	var bestThreshold float64 = 0
+	var bestThreshold float64 = -1
 	for featureId := 0; featureId < len(data[0].Values); featureId++ {
 		gain, threshold := findBestThresHoldFast(data, featureId)
 		if gain > bestGain {
@@ -162,12 +173,15 @@ func findBestSplit(data Data) (int, float64) {
 }
 
 func makeLeaf(data Data) *Tree {
-	tree := &Tree{}
+	tree := &Tree{
+		Leaf:true,
+	}
 	counts := countLabels(data)
-	prediction := make(map[string]float64)
+	prediction := make(Prediction)
 	for k, v := range counts {
 		prediction[k] = float64(v) / float64(len(data))
 	}
+	tree.Prediction = prediction
 	return tree
 }
 
@@ -193,11 +207,16 @@ func c45(data Data, maxLevels int) *Tree {
 	return tree
 }
 
-func testSubmission(data Data, test Data, depth int) ([]string, *Tree) {
+func testSubmission(data Data, test Data, depth int) ([]Prediction, *Tree) {
 	tree := c45(data, depth)
-	predictions := make([]string, 10)
+	predictions := make([]Prediction, 0)
 	for _, point := range test {
 		predictions = append(predictions, tree.predict(point))
 	}
 	return predictions, tree
+}
+
+func submission(data Data, test Data) []Prediction {
+	predictions, _ := testSubmission(data, test, 1)
+	return predictions
 }

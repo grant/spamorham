@@ -3,6 +3,7 @@ import (
 	"testing"
 	"github.com/grant/spamorham/data"
 	"strconv"
+	"fmt"
 )
 
 var collegeData Data = data.GetCollegeData()
@@ -31,3 +32,71 @@ func TestEntropy(t *testing.T) {
 	}
 }
 
+func TestLeftSplit(t *testing.T) {
+	left, right := splitData(collegeData, 0, 25)
+	for _, point := range left {
+		if point.Values[0] >= 25 {
+			t.Fail()
+		}
+		if len(left) != 3 {
+			t.Fail()
+		}
+	}
+
+	for _, point := range right {
+		if point.Values[0] < 25 {
+			t.Fail()
+		}
+		if len(right) != 7 {
+			t.Fail()
+		}
+	}
+}
+
+func TestThreshold(t *testing.T) {
+	gain, thresh := findBestThresHoldFast(collegeData, 1)
+	if !floatEquals(gain, 0.321928094887) {
+		t.Error(gain)
+	}
+	if thresh != 38000 {
+		t.Error(thresh)
+	}
+}
+
+func TestBestSplit(t *testing.T) {
+	feature, thresh := findBestSplit(collegeData)
+	if feature != 1 {
+		t.Error(feature)
+	}
+	if thresh != 38000 {
+		t.Error(thresh)
+	}
+
+	left, right := splitData(collegeData, feature, thresh)
+	feature, thresh = findBestSplit(left)
+	if feature != -1 {
+		t.Error(feature)
+	}
+	if thresh != -1 {
+		t.Error(thresh)
+	}
+
+	feature, thresh = findBestSplit(right)
+	if feature != 0 {
+		t.Error(feature)
+	}
+	if thresh != 43 {
+		t.Error(thresh)
+	}
+}
+
+func TestSubmission(t *testing.T) {
+	train := data.GetSpamTrainData()
+	valid := data.GetSpamValidData()
+	preds := submission(train, valid)
+	acc := accuracy(valid, preds)
+	fmt.Println("Your current accuracy is: " + FloatToString(acc))
+	if acc < .75 {
+		t.Error(acc)
+	}
+}
